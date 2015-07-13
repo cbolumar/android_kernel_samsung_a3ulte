@@ -110,22 +110,6 @@ struct mmc_ext_csd {
 
 	unsigned int            feature_support;
 #define MMC_DISCARD_FEATURE	BIT(0)                  /* CMD38 feature */
-	/*
-	 * smart_info : It's for eMMC 5.0 or later device
-	 * [63:56] : DEVICE_LIFE_TIME_EST_TYPE_B [269]
-	 * [55:48] : DEVICE_LIFE_TIME_EST_TYPE_A [268]
-	 * [47:40] : PRE_EOL_INFO [267]
-	 * [39:32] : OPTIMAL_TRIM_UNIT_SIZE [264]
-	 * [31:16] : DEVICE_VERSION [263-262]
-	 * [15:08] : HC_ERASE_GRP_SIZE [224]
-	 * [07:00] : HC_WP_GRP_SIZE [221]
-	 */
-	unsigned long long	smart_info;
-	/*
-	 * fwdate : It's for eMMC 5.0 or later device
-	 * [63:00] : FIRMWARE_VERSION [261-254]
-	 */
-	unsigned long long	fwdate;
 };
 
 struct sd_scr {
@@ -401,10 +385,6 @@ struct mmc_card {
 
 	unsigned int		sd_bus_speed;	/* Bus Speed Mode set for the card */
 
-	struct device_attribute	bkops_attr;	/* for enable/disable bkops mode */
-	u8			bkops_enable;	/* bkops mode on/off */
-	spinlock_t		bkops_lock;	/* lock for bkops_enable filed */
-
 	struct dentry		*debugfs_root;
 	struct mmc_part	part[MMC_NUM_PHY_PARTITION]; /* physical partitions */
 	unsigned int    nr_parts;
@@ -475,6 +455,7 @@ struct mmc_fixup {
 #define CID_MANFID_TOSHIBA	0x11
 #define CID_MANFID_MICRON	0x13
 #define CID_MANFID_SAMSUNG	0x15
+#define CID_MANFID_KINGSTON	0x70
 #define CID_MANFID_HYNIX	0x90
 #define CID_MANFID_NUMONYX_MICRON 0xfe
 

@@ -96,6 +96,7 @@ struct notifier_block;
  * FORCE_DISABLE  Regulator forcibly shut down by software.
  * VOLTAGE_CHANGE Regulator voltage changed.
  * DISABLE        Regulator was disabled.
+ * ENABLE         Regulator was enabled.
  *
  * NOTE: These events can be OR'ed together when passed into handler.
  */
@@ -108,6 +109,7 @@ struct notifier_block;
 #define REGULATOR_EVENT_FORCE_DISABLE		0x20
 #define REGULATOR_EVENT_VOLTAGE_CHANGE		0x40
 #define REGULATOR_EVENT_DISABLE 		0x80
+#define REGULATOR_EVENT_ENABLE			0x100
 
 struct regulator;
 
@@ -153,9 +155,6 @@ void devm_regulator_put(struct regulator *regulator);
 int __must_check regulator_enable(struct regulator *regulator);
 int regulator_disable(struct regulator *regulator);
 int regulator_force_disable(struct regulator *regulator);
-#ifdef CONFIG_MFD_RT5033_RESET_WA
-int regulator_get_status(struct regulator * regulator);
-#endif
 int regulator_is_enabled(struct regulator *regulator);
 int regulator_disable_deferred(struct regulator *regulator, int ms);
 
@@ -203,8 +202,6 @@ int regulator_unregister_notifier(struct regulator *regulator,
 /* driver data - core doesn't touch */
 void *regulator_get_drvdata(struct regulator *regulator);
 void regulator_set_drvdata(struct regulator *regulator, void *data);
-
-void regulator_showall_enabled(void);
 
 #else
 
@@ -254,13 +251,6 @@ static inline int regulator_force_disable(struct regulator *regulator)
 {
 	return 0;
 }
-
-#ifdef CONFIG_MFD_RT5033_RESET_WA
-static inline int regulator_get_status(struct regulator *regulator)
-{
-	return 0;
-}
-#endif
 
 static inline int regulator_disable_deferred(struct regulator *regulator,
 					     int ms)

@@ -17,6 +17,7 @@
 #include <linux/io.h>
 #include <linux/mmc/host.h>
 #include <linux/pm_qos.h>
+#include <linux/ratelimit.h>
 
 struct sdhci_next {
 	unsigned int sg_count;
@@ -25,7 +26,13 @@ struct sdhci_next {
 
 enum sdhci_power_policy {
 	SDHCI_PERFORMANCE_MODE,
+	SDHCI_PERFORMANCE_MODE_INIT,
 	SDHCI_POWER_SAVE_MODE,
+};
+
+enum sdhci_cluster_info {
+	SDHCI_LITTLE_CLUSTER,
+	SDHCI_BIG_CLUSTER,
 };
 
 struct sdhci_host {
@@ -166,7 +173,14 @@ struct sdhci_host {
  * Some SDHC controllers are unable to handle data-end bit error in
  * 1-bit mode of SDIO.
  */
-#define SDHCI_QUIRK2_IGN_DATA_END_BIT_ERROR             (1<<9)
+#define SDHCI_QUIRK2_IGN_DATA_END_BIT_ERROR             (1<<12)
+
+/*
+ * Some SDHC controllers do not require data buffers alignment, skip
+ * the bounce buffer logic when preparing data
+ */
+#define SDHCI_QUIRK2_ADMA_SKIP_DATA_ALIGNMENT             (1<<13)
+
 	int irq;		/* Device IRQ */
 	void __iomem *ioaddr;	/* Mapped address */
 
@@ -255,7 +269,10 @@ struct sdhci_host {
 #define SDHCI_TUNING_MODE_1	0
 	struct timer_list	tuning_timer;	/* Timer for tuning */
 
-	unsigned int cpu_dma_latency_us;
+	unsigned int *cpu_dma_latency_us;
+	unsigned int cpu_dma_latency_tbl_sz;
+	enum sdhci_cluster_info pm_qos_index;
+	unsigned int *cpu_affinity_mask;
 	struct pm_qos_request pm_qos_req_dma;
 	unsigned int pm_qos_timeout_us;         /* timeout for PM QoS request */
 	struct device_attribute pm_qos_tout;
@@ -269,7 +286,7 @@ struct sdhci_host {
 	bool async_int_supp;  /* async support to rxv int, when clks are off */
 	bool disable_sdio_irq_deferred; /* status of disabling sdio irq */
 	u32 auto_cmd_err_sts;
-	u32 hc_pwrctrl_reg;
+	struct ratelimit_state dbg_dump_rs;
 	unsigned long private[0] ____cacheline_aligned;
 };
 #endif /* LINUX_MMC_SDHCI_H */
